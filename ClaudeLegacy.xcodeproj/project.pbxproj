@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		CE123A592F5EDE2C008A1A3A /* Polyfills in Resources */ = {isa = PBXBuildFile; fileRef = CE123A582F5EDE2C008A1A3A /* Polyfills */; };
 		CE123A5C2F5EDE2D008A1A3A /* PolyfillsLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = CE123A5B2F5EDE2D008A1A3A /* PolyfillsLoader.m */; };
-		DBC0DE0110000000000000A2 /* DebugConsole.m in Sources */ = {isa = PBXBuildFile; fileRef = DBC0DE0110000000000000A1 /* DebugConsole.m */; };
 		CEADC8192F5E8F26000F74EA /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CEADC8182F5E8F26000F74EA /* AppDelegate.m */; };
 		CEADC8242F5E8F26000F74EA /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CEADC8232F5E8F26000F74EA /* SceneDelegate.m */; };
 		CEADC8272F5E8F26000F74EA /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CEADC8262F5E8F26000F74EA /* ViewController.m */; };
@@ -59,8 +58,6 @@
 		CE123A582F5EDE2C008A1A3A /* Polyfills */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Polyfills; path = "Polyfills/layout/Library/Application Support/Polyfills"; sourceTree = "<group>"; };
 		CE123A5A2F5EDE2D008A1A3A /* PolyfillsLoader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PolyfillsLoader.h; sourceTree = "<group>"; };
 		CE123A5B2F5EDE2D008A1A3A /* PolyfillsLoader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PolyfillsLoader.m; sourceTree = "<group>"; };
-		DBC0DE0110000000000000A0 /* DebugConsole.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DebugConsole.h; sourceTree = "<group>"; };
-		DBC0DE0110000000000000A1 /* DebugConsole.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DebugConsole.m; sourceTree = "<group>"; };
 		CEADC8142F5E8F26000F74EA /* ClaudeLegacy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeLegacy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CEADC8172F5E8F26000F74EA /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		CEADC8182F5E8F26000F74EA /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -136,8 +133,6 @@
 				CEADC8182F5E8F26000F74EA /* AppDelegate.m */,
 				CE123A5A2F5EDE2D008A1A3A /* PolyfillsLoader.h */,
 				CE123A5B2F5EDE2D008A1A3A /* PolyfillsLoader.m */,
-				DBC0DE0110000000000000A0 /* DebugConsole.h */,
-				DBC0DE0110000000000000A1 /* DebugConsole.m */,
 				CEADC8222F5E8F26000F74EA /* SceneDelegate.h */,
 				CEADC8232F5E8F26000F74EA /* SceneDelegate.m */,
 				CEADC8252F5E8F26000F74EA /* ViewController.h */,
@@ -308,7 +303,6 @@
 			files = (
 				CEADC8272F5E8F26000F74EA /* ViewController.m in Sources */,
 				CE123A5C2F5EDE2D008A1A3A /* PolyfillsLoader.m in Sources */,
-				DBC0DE0110000000000000A2 /* DebugConsole.m in Sources */,
 				CEADC8192F5E8F26000F74EA /* AppDelegate.m in Sources */,
 				CEADC8312F5E8F29000F74EA /* main.m in Sources */,
 				CEADC8242F5E8F26000F74EA /* SceneDelegate.m in Sources */,

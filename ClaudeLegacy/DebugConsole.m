@@ -36,6 +36,9 @@
 @property (nonatomic, strong) NSMutableArray<NSString *> *lines;
 @property (nonatomic, strong) NSDateFormatter *fmt;
 @property (nonatomic, assign) BOOL stderrTapped;
+@property (nonatomic, copy) NSString *logPath;
+@property (nonatomic, strong) NSFileHandle *logHandle;
+@property (nonatomic, copy) void (^dumpHandler)(void);
 @end
 
 @implementation DebugConsole
@@ -52,9 +55,29 @@
         _lines = [NSMutableArray array];
         _fmt = [NSDateFormatter new];
         _fmt.dateFormat = @"HH:mm:ss.SSS";
+        [self openLogFile];
     }
     return self;
 }
+
+- (void)openLogFile {
+    NSString *docs = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+    if (!docs) return;
+    NSString *path = [docs stringByAppendingPathComponent:@"debug.log"];
+    self.logPath = path;
+    // Truncate on each launch so users only see the current session.
+    [[NSFileManager defaultManager] createFileAtPath:path contents:[NSData data] attributes:nil];
+    self.logHandle = [NSFileHandle fileHandleForWritingAtPath:path];
+    NSString *header = [NSString stringWithFormat:@"=== session started %@ ===\n",
+                        [NSDateFormatter localizedStringFromDate:[NSDate date]
+                                                       dateStyle:NSDateFormatterShortStyle
+                                                       timeStyle:NSDateFormatterMediumStyle]];
+    [self.logHandle writeData:[header dataUsingEncoding:NSUTF8StringEncoding]];
+}
+
+- (NSString *)logFilePath { return self.logPath; }
+
+- (void)setDumpHandler:(void (^)(void))handler { _dumpHandler = [handler copy]; }
 
 - (void)attachToWindowScene:(UIWindowScene *)scene {
     if (self.overlayWindow) return;
@@ -101,6 +124,22 @@
     [close addTarget:self action:@selector(togglePanel) forControlEvents:UIControlEventTouchUpInside];
     [panel addSubview:close];
 
+    UIButton *dump = [UIButton buttonWithType:UIButtonTypeSystem];
+    dump.translatesAutoresizingMaskIntoConstraints = NO;
+    [dump setTitle:@"dump" forState:UIControlStateNormal];
+    [dump setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+    dump.titleLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightSemibold];
+    [dump addTarget:self action:@selector(dumpTapped) forControlEvents:UIControlEventTouchUpInside];
+    [panel addSubview:dump];
+
+    UIButton *copyPath = [UIButton buttonWithType:UIButtonTypeSystem];
+    copyPath.translatesAutoresizingMaskIntoConstraints = NO;
+    [copyPath setTitle:@"copy path" forState:UIControlStateNormal];
+    [copyPath setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+    copyPath.titleLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightSemibold];
+    [copyPath addTarget:self action:@selector(copyPathTapped) forControlEvents:UIControlEventTouchUpInside];
+    [panel addSubview:copyPath];
+
     UIButton *btn = [UIButton buttonWithType:UIButtonTypeSystem];
     btn.translatesAutoresizingMaskIntoConstraints = NO;
     [btn setTitle:@"DBG" forState:UIControlStateNormal];
@@ -144,6 +183,10 @@
 
         [clear.topAnchor constraintEqualToAnchor:panel.topAnchor constant:6],
         [clear.leadingAnchor constraintEqualToAnchor:panel.leadingAnchor constant:12],
+        [dump.topAnchor constraintEqualToAnchor:panel.topAnchor constant:6],
+        [dump.leadingAnchor constraintEqualToAnchor:clear.trailingAnchor constant:16],
+        [copyPath.topAnchor constraintEqualToAnchor:panel.topAnchor constant:6],
+        [copyPath.leadingAnchor constraintEqualToAnchor:dump.trailingAnchor constant:16],
         [close.topAnchor constraintEqualToAnchor:panel.topAnchor constant:6],
         [close.trailingAnchor constraintEqualToAnchor:panel.trailingAnchor constant:-12],
 
@@ -162,6 +205,9 @@
     ]];
 
     [self append:@"debug console attached" level:@"info"];
+    if (self.logPath) {
+        [self append:[NSString stringWithFormat:@"log file: %@", self.logPath] level:@"info"];
+    }
 }
 
 - (void)togglePanel {
@@ -173,6 +219,17 @@
 - (void)clearTapped {
     [self.lines removeAllObjects];
     [self renderLog];
+}
+
+- (void)dumpTapped {
+    if (self.dumpHandler) self.dumpHandler();
+}
+
+- (void)copyPathTapped {
+    if (self.logPath) {
+        UIPasteboard.generalPasteboard.string = self.logPath;
+        [self append:[NSString stringWithFormat:@"log path copied: %@", self.logPath] level:@"info"];
+    }
 }
 
 - (void)renderLog {
@@ -198,6 +255,11 @@
     NSString *lvl = level ?: @"log";
     NSString *stamp = [NSString stringWithFormat:@"%@ [%@] %@",
                        [self.fmt stringFromDate:[NSDate date]], lvl, line];
+    if (self.logHandle) {
+        @try {
+            [self.logHandle writeData:[[stamp stringByAppendingString:@"\n"] dataUsingEncoding:NSUTF8StringEncoding]];
+        } @catch (NSException *e) {}
+    }
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.lines addObject:stamp];
         if (self.lines.count > 500) {

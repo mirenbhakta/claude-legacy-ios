@@ -34,22 +34,35 @@
 
     "var lastSnap='';"
     "function snap(tag){try{"
+    "if(window.top!==window)return;"
     "var b=document.body;"
-    "var html=document.documentElement;"
     "var bg=b?getComputedStyle(b).backgroundColor:'?';"
     "var color=b?getComputedStyle(b).color:'?';"
     "var kids=b?b.children.length:-1;"
     "var text=b?(b.innerText||'').trim().length:-1;"
     "var scripts=document.scripts?document.scripts.length:-1;"
-    "var next=document.getElementById('__next');"
-    "var root=document.getElementById('root');"
-    "var cf=document.querySelector('[data-testid=\"challenge-widget\"], #challenge-form, #cf-please-wait, .cf-browser-verification');"
-    "var visible=[];"
-    "if(b){for(var i=0;i<Math.min(b.children.length,6);i++){var c=b.children[i];visible.push(c.tagName+(c.id?'#'+c.id:'')+(c.className&&typeof c.className==='string'?'.'+c.className.split(/\\s+/).slice(0,2).join('.'):''));}}"
-    "var line=tag+' rs='+document.readyState+' title='+JSON.stringify(document.title||'')+' url='+location.pathname+location.search+' body.kids='+kids+' body.textLen='+text+' scripts='+scripts+' bg='+bg+' color='+color+' next='+(!!next)+' root='+(!!root)+' cf='+(!!cf)+' first='+visible.join('|');"
+    "var root=document.getElementById('root')||document.getElementById('__next');"
+    "var rootKids=root?root.children.length:-1;"
+    "var rootHtml=root?root.innerHTML.length:-1;"
+    "var ifr=document.querySelectorAll('iframe');"
+    "var ifrSrc='';for(var j=0;j<Math.min(ifr.length,3);j++){ifrSrc+=(j?'|':'')+(ifr[j].src||ifr[j].getAttribute('src')||'?').slice(0,80);}"
+    "var wp=(typeof window.__webpack_require__==='function');"
+    "var subtle=!!(window.crypto&&window.crypto.subtle);"
+    "var lt=(window.LegacyTranspiler&&window.LegacyTranspiler.cache)?Object.keys(window.LegacyTranspiler.cache).length:'?';"
+    "var line=tag+' rs='+document.readyState+' title='+JSON.stringify(document.title||'')+' url='+location.pathname+location.search"
+    "+' body.kids='+kids+' textLen='+text+' scripts='+scripts+' bg='+bg+' color='+color"
+    "+' root='+(!!root)+' rootKids='+rootKids+' rootHtml='+rootHtml"
+    "+' iframes='+ifr.length+' ifrSrc='+ifrSrc"
+    "+' webpack='+wp+' subtle='+subtle+' ltCache='+lt+' ios='+(window.iosVersion||'?');"
     "if(line!==lastSnap){lastSnap=line;send('snap',[line]);}"
     "}catch(e){send('snap-err',[String(e)]);}}"
     "window.__dbgSnap=snap;"
+    "window.__dbgDump=function(){try{"
+    "var root=document.getElementById('root')||document.getElementById('__next')||document.body;"
+    "var html=root?root.outerHTML:'(no root)';"
+    "for(var i=0;i<html.length;i+=1500){send('dump',[('chunk '+(i/1500|0)+' ')+html.slice(i,i+1500)]);}"
+    "send('info',['dump complete, length='+html.length]);"
+    "}catch(e){send('error',['dump failed: '+e]);}};"
     "document.addEventListener('readystatechange',function(){snap('rs:'+document.readyState);});"
     "window.addEventListener('load',function(){snap('load');});"
     "setTimeout(function(){snap('t+500');},500);"
@@ -179,6 +192,11 @@
     [self injectPatch];
     [PolyfillsLoader injectPolyfillsIntoController:_webView.configuration.userContentController];
     [self injectMatchMediaAddEventListener];
+
+    __weak WKWebView *weakWeb = _webView;
+    [[DebugConsole shared] setDumpHandler:^{
+        [weakWeb evaluateJavaScript:@"typeof __dbgDump==='function'?__dbgDump():'no-dump'" completionHandler:nil];
+    }];
 
     [[DebugConsole shared] append:@"loading https://claude.ai" level:@"info"];
     [_webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://claude.ai"]]];

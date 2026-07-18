@@ -26,6 +26,16 @@
 }
 @end
 
+@interface PassthroughWindow : UIWindow
+@end
+
+@implementation PassthroughWindow
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    UIView *hit = [super hitTest:point withEvent:event];
+    return hit == self ? nil : hit;
+}
+@end
+
 @interface DebugConsole ()
 @property (nonatomic, strong) UIWindow *overlayWindow;
 @property (nonatomic, strong) UITextView *logView;
@@ -82,7 +92,7 @@
 - (void)attachToWindowScene:(UIWindowScene *)scene {
     if (self.overlayWindow) return;
 
-    UIWindow *win = [[UIWindow alloc] initWithWindowScene:scene];
+    UIWindow *win = [[PassthroughWindow alloc] initWithWindowScene:scene];
     win.windowLevel = UIWindowLevelStatusBar + 100;
     win.backgroundColor = UIColor.clearColor;
     win.hidden = NO;

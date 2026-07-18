@@ -57,9 +57,9 @@ PAYLOAD_DIR="${OUTPUT_DIR}/Payload"
 mkdir -p "${PAYLOAD_DIR}"
 cp -R "${APP_PATH}" "${PAYLOAD_DIR}/"
 
-# Create IPA
+# Create IPA (preserve symlinks with -y for embedded frameworks)
 cd "${OUTPUT_DIR}"
-zip -qr "${IPA_NAME}" Payload
+zip -qry "${IPA_NAME}" Payload
 rm -rf Payload
 
 echo ""

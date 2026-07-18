@@ -1,0 +1,85 @@
+name: Build IPA
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Create a GitHub release with the produced IPA'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build unsigned IPA (TrollStore)
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.4.app || sudo xcode-select -s /Applications/Xcode.app
+          xcodebuild -version
+
+      - name: Show project layout
+        run: |
+          ls -la
+          ls -la Polyfills || true
+
+      - name: Build IPA
+        run: |
+          chmod +x ./build.sh
+          ./build.sh
+
+      - name: Compute artifact name
+        id: naming
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+          else
+            VERSION="build-${SHORT_SHA}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=ClaudeLegacy-${VERSION}.ipa" >> "$GITHUB_OUTPUT"
+
+      - name: Rename IPA
+        run: |
+          mkdir -p dist
+          cp "build/output/ClaudeLegacy.ipa" "dist/${{ steps.naming.outputs.artifact_name }}"
+          ls -la dist
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.naming.outputs.artifact_name }}
+          path: dist/${{ steps.naming.outputs.artifact_name }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/${{ steps.naming.outputs.artifact_name }}
+          tag_name: ${{ steps.naming.outputs.version }}
+          name: ${{ steps.naming.outputs.version }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true

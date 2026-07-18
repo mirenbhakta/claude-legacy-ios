@@ -2,6 +2,30 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Claude needs camera access to attach photos and videos to your conversations.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Claude needs microphone access for voice input.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Claude needs photo library access to attach images to your conversations.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Claude needs permission to save images to your photo library.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Claude may request your location when a page you visit needs it.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Authenticate to unlock Claude.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+	</dict>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tel</string>
+		<string>mailto</string>
+		<string>sms</string>
+		<string>facetime</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

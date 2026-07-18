@@ -140,6 +140,14 @@
     [copyPath addTarget:self action:@selector(copyPathTapped) forControlEvents:UIControlEventTouchUpInside];
     [panel addSubview:copyPath];
 
+    UIButton *hide = [UIButton buttonWithType:UIButtonTypeSystem];
+    hide.translatesAutoresizingMaskIntoConstraints = NO;
+    [hide setTitle:@"hide overlay" forState:UIControlStateNormal];
+    [hide setTitleColor:[UIColor colorWithRed:1.0 green:0.6 blue:0.6 alpha:1.0] forState:UIControlStateNormal];
+    hide.titleLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightSemibold];
+    [hide addTarget:self action:@selector(hideOverlayTapped) forControlEvents:UIControlEventTouchUpInside];
+    [panel addSubview:hide];
+
     UIButton *btn = [UIButton buttonWithType:UIButtonTypeSystem];
     btn.translatesAutoresizingMaskIntoConstraints = NO;
     [btn setTitle:@"DBG" forState:UIControlStateNormal];
@@ -184,9 +192,11 @@
         [clear.topAnchor constraintEqualToAnchor:panel.topAnchor constant:6],
         [clear.leadingAnchor constraintEqualToAnchor:panel.leadingAnchor constant:12],
         [dump.topAnchor constraintEqualToAnchor:panel.topAnchor constant:6],
-        [dump.leadingAnchor constraintEqualToAnchor:clear.trailingAnchor constant:16],
+        [dump.leadingAnchor constraintEqualToAnchor:clear.trailingAnchor constant:12],
         [copyPath.topAnchor constraintEqualToAnchor:panel.topAnchor constant:6],
-        [copyPath.leadingAnchor constraintEqualToAnchor:dump.trailingAnchor constant:16],
+        [copyPath.leadingAnchor constraintEqualToAnchor:dump.trailingAnchor constant:12],
+        [hide.topAnchor constraintEqualToAnchor:panel.topAnchor constant:6],
+        [hide.leadingAnchor constraintEqualToAnchor:copyPath.trailingAnchor constant:12],
         [close.topAnchor constraintEqualToAnchor:panel.topAnchor constant:6],
         [close.trailingAnchor constraintEqualToAnchor:panel.trailingAnchor constant:-12],
 
@@ -230,6 +240,11 @@
         UIPasteboard.generalPasteboard.string = self.logPath;
         [self append:[NSString stringWithFormat:@"log path copied: %@", self.logPath] level:@"info"];
     }
+}
+
+- (void)hideOverlayTapped {
+    [self append:@"overlay hidden; kill+relaunch to restore" level:@"info"];
+    self.overlayWindow.hidden = YES;
 }
 
 - (void)renderLog {

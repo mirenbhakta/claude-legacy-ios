@@ -74,6 +74,9 @@
     "if(_fetch){window.fetch=function(){var args=arguments;var u=args[0];var url=(u&&u.url)||String(u);"
     "return _fetch.apply(this,args).then(function(r){if(!r.ok){send('fetch',[r.status+' '+url]);}return r;},function(err){send('fetch-fail',[String(err)+' '+url]);throw err;});};}"
 
+    "function tag(t){if(!t||!t.tagName)return String(t);return t.tagName+(t.id?'#'+t.id:'')+(t.className&&typeof t.className==='string'?'.'+t.className.split(/\\s+/).slice(0,2).join('.'):'')+(t.getAttribute&&t.getAttribute('data-testid')?'[t='+t.getAttribute('data-testid')+']':'');}"
+    "['touchstart','pointerdown','click','focus'].forEach(function(ev){document.addEventListener(ev,function(e){try{if(window.top!==window)return;send('touch',[ev+' '+tag(e.target)+' @'+((e.touches&&e.touches[0])||e).clientX+','+((e.touches&&e.touches[0])||e).clientY]);}catch(_){}} ,{capture:true,passive:true});});"
+
     "})();";
     WKUserScript *s = [[WKUserScript alloc] initWithSource:js
                                              injectionTime:WKUserScriptInjectionTimeAtDocumentStart

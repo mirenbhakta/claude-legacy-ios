@@ -133,7 +133,8 @@
 
 - (void)injectCustomCSS {
     NSString *css = @"button[data-testid='login-with-google'] { display: none !important; }"
-    "button[data-testid='login-with-google'] + p { display: none !important; }";
+    "button[data-testid='login-with-google'] + p { display: none !important; }"
+    "video[aria-hidden='true'][autoplay][loop] { display: none !important; }";
     NSString *js = [NSString stringWithFormat:
                     @"(function(){"
                     "var s=document.createElement('style');"

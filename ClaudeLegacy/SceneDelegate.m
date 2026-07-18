@@ -2,11 +2,17 @@
 //  SceneDelegate.m
 //  ClaudeLegacy
 //
-//  Created by user on 3/9/26.
-//
 
 #import "SceneDelegate.h"
+#import "DebugConsole.h"
 
 @implementation SceneDelegate
+
+- (void)sceneDidBecomeActive:(UIScene *)scene {
+    if ([scene isKindOfClass:[UIWindowScene class]]) {
+        [[DebugConsole shared] installStderrTap];
+        [[DebugConsole shared] attachToWindowScene:(UIWindowScene *)scene];
+    }
+}
 
 @end

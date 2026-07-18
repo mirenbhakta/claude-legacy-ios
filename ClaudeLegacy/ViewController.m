@@ -8,6 +8,7 @@
 #import <SafariServices/SafariServices.h>
 #import "ViewController.h"
 #import "PolyfillsLoader.h"
+#import "DebugConsole.h"
 
 #import <WebKit/WebKit.h>
 
@@ -18,6 +19,23 @@
 @end
 
 @implementation ViewController
+
+- (void)injectDebugBridge {
+    NSString *js = @"(function(){"
+    "var send=function(level,args){try{"
+    "var parts=[];for(var i=0;i<args.length;i++){var a=args[i];try{parts.push(typeof a==='string'?a:JSON.stringify(a));}catch(e){parts.push(String(a));}}"
+    "window.webkit.messageHandlers.debugLog.postMessage(level+'\\u0001'+parts.join(' '));"
+    "}catch(e){}};"
+    "['log','info','warn','error'].forEach(function(k){var o=console[k];console[k]=function(){send(k,arguments);return o.apply(console,arguments);};});"
+    "window.addEventListener('error',function(e){send('uncaught',[((e.message||'')+' at '+(e.filename||'?')+':'+(e.lineno||'?')+':'+(e.colno||'?'))]);});"
+    "window.addEventListener('unhandledrejection',function(e){var r=e.reason;send('promise',[(r&&r.stack)||String(r)]);});"
+    "send('info',['[bridge] installed on '+location.href]);"
+    "})();";
+    WKUserScript *s = [[WKUserScript alloc] initWithSource:js
+                                             injectionTime:WKUserScriptInjectionTimeAtDocumentStart
+                                          forMainFrameOnly:NO];
+    [_webView.configuration.userContentController addUserScript:s];
+}
 
 - (void) injectPatch {
     NSURL *scriptURL = [NSBundle.mainBundle URLForResource:@"patch" withExtension:@"js"];
@@ -121,6 +139,8 @@
     _webView.allowsBackForwardNavigationGestures = YES;
 
     [self.webView.configuration.userContentController addScriptMessageHandler:self name:@"patchScript"];
+    [self.webView.configuration.userContentController addScriptMessageHandler:self name:@"debugLog"];
+    [self injectDebugBridge];
 
     [self injectIOSVersion];
     [self injectCustomCSS];
@@ -129,6 +149,7 @@
     [PolyfillsLoader injectPolyfillsIntoController:_webView.configuration.userContentController];
     [self injectMatchMediaAddEventListener];
 
+    [[DebugConsole shared] append:@"loading https://claude.ai" level:@"info"];
     [_webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://claude.ai"]]];
 }
 
@@ -142,14 +163,25 @@
 
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
     [webView.scrollView.refreshControl endRefreshing];
+    [[DebugConsole shared] append:[NSString stringWithFormat:@"finish: %@", webView.URL.absoluteString] level:@"info"];
 }
 
 - (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error {
     [webView.scrollView.refreshControl endRefreshing];
+    [[DebugConsole shared] append:[NSString stringWithFormat:@"nav fail: %@", error.localizedDescription] level:@"nav-fail"];
 }
 
 - (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error {
     [webView.scrollView.refreshControl endRefreshing];
+    [[DebugConsole shared] append:[NSString stringWithFormat:@"provisional fail: %@ (%@)", error.localizedDescription, error.userInfo[NSURLErrorFailingURLStringErrorKey] ?: @"?"] level:@"nav-fail"];
+}
+
+- (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation {
+    [[DebugConsole shared] append:[NSString stringWithFormat:@"start: %@", webView.URL.absoluteString] level:@"info"];
+}
+
+- (void)webViewWebContentProcessDidTerminate:(WKWebView *)webView {
+    [[DebugConsole shared] append:@"web content process terminated" level:@"error"];
 }
 
 - (BOOL)isClaudeHost:(NSString *)host {
@@ -198,6 +230,15 @@
 - (void)userContentController:(WKUserContentController *)userContentController
       didReceiveScriptMessage:(WKScriptMessage *)message
 {
+    if ([message.name isEqualToString:@"debugLog"]) {
+        if (![message.body isKindOfClass:[NSString class]]) return;
+        NSString *body = message.body;
+        NSRange sep = [body rangeOfString:@"\x01"];
+        NSString *level = sep.location == NSNotFound ? @"log" : [body substringToIndex:sep.location];
+        NSString *text = sep.location == NSNotFound ? body : [body substringFromIndex:sep.location + 1];
+        [[DebugConsole shared] append:text level:level];
+        return;
+    }
     if (![message.name isEqualToString:@"patchScript"]) {
         return;
     }
@@ -212,6 +253,7 @@
     [self.webView evaluateJavaScript:wrapped completionHandler:^(id res, NSError *err) {
         if (err) {
             NSLog(@"[evaluateJavaScript]: fail (%lu chars): %@", (unsigned long)code.length, err.localizedDescription);
+            [[DebugConsole shared] append:[NSString stringWithFormat:@"eval fail (%lu chars): %@", (unsigned long)code.length, err.localizedDescription] level:@"error"];
         } else {
             NSLog(@"[evaluateJavaScript]: success");
         }

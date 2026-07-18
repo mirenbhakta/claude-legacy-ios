@@ -119,10 +119,6 @@
     _webView.UIDelegate = self;
     _webView.scrollView.scrollEnabled = YES;
     _webView.allowsBackForwardNavigationGestures = YES;
-    _webView.configuration.allowsInlineMediaPlayback = YES;
-    if (@available(iOS 14.0, *)) {
-        _webView.configuration.defaultWebpagePreferences.allowsContentJavaScript = YES;
-    }
 
     [self.webView.configuration.userContentController addScriptMessageHandler:self name:@"patchScript"];
 
@@ -170,14 +166,6 @@
 
     if ([scheme isEqualToString:@"tel"] || [scheme isEqualToString:@"mailto"] || [scheme isEqualToString:@"sms"] || [scheme isEqualToString:@"facetime"]) {
         [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
-        decisionHandler(WKNavigationActionPolicyCancel);
-        return;
-    }
-
-    if (![scheme isEqualToString:@"http"] && ![scheme isEqualToString:@"https"] && ![scheme isEqualToString:@"about"]) {
-        if ([[UIApplication sharedApplication] canOpenURL:url]) {
-            [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
-        }
         decisionHandler(WKNavigationActionPolicyCancel);
         return;
     }

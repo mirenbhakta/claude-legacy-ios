@@ -196,6 +196,22 @@
     return nil;
 }
 
+// iOS 15+: WKWebView denies getUserMedia (mic/camera) unless we implement this
+// and explicitly grant. Without it the JS promise rejects with NotAllowedError
+// before the system permission prompt ever appears. The OS still shows its own
+// mic/camera prompt (backed by the NS*UsageDescription keys) the first time we grant.
+- (void)webView:(WKWebView *)webView
+requestMediaCapturePermissionForOrigin:(WKSecurityOrigin *)origin
+initiatedByFrame:(WKFrameInfo *)frame
+           type:(WKMediaCaptureType)type
+decisionHandler:(void (^)(WKPermissionDecision decision))decisionHandler API_AVAILABLE(ios(15.0)) {
+    if ([self isClaudeHost:origin.host]) {
+        decisionHandler(WKPermissionDecisionGrant);
+    } else {
+        decisionHandler(WKPermissionDecisionPrompt);
+    }
+}
+
 - (void)userContentController:(WKUserContentController *)userContentController
       didReceiveScriptMessage:(WKScriptMessage *)message
 {
